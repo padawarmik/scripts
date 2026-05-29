@@ -82,7 +82,7 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Rerun alias
-alias zsh-rerun="curl -s https://raw.githubusercontent.com/padawarmik/docker-scripts/main/scripts/zsh/zsh.sh > zsh.sh ;  bash zsh.sh ; rm zsh.sh"
+alias zsh-rerun="curl -fsSL https://raw.githubusercontent.com/padawarmik/scripts/main/scripts/zsh/zsh.sh | bash"
 
 # Shell integrations
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
