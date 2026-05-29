@@ -6,7 +6,7 @@ Utility scripts for bootstrapping and configuring machines.
 
 | Script | Description |
 | --- | --- |
-| [`scripts/zsh/zsh.sh`](scripts/zsh/zsh.sh) | Installs Zsh, Oh My Zsh, Powerlevel10k, and a baseline shell configuration. Optionally installs Kubernetes CLI tools. |
+| [`scripts/zsh/zsh.sh`](scripts/zsh/zsh.sh) | Installs Zsh, Oh My Zsh, Powerlevel10k, and a baseline shell configuration on Debian-like (`apt`) and Arch-like (`pacman`) distributions. Optionally installs Kubernetes CLI tools. |
 
 ## Usage
 
