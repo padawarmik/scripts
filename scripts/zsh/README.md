@@ -1,6 +1,6 @@
 # Zsh setup
 
-Installs Zsh with Oh My Zsh, Powerlevel10k, and the included baseline configuration.
+Installs Zsh with Oh My Zsh, Powerlevel10k, and the included baseline configuration on Debian-like (`apt`) and Arch-like (`pacman`) distributions.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/padawarmik/scripts/main/scripts/zsh/zsh.sh | bash
