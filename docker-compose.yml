@@ -1,8 +1,0 @@
-version: '3'
-
-services:
-  script:
-    image: padawarm/scripts:latest
-    restart: unless-stopped
-    ports:
-      - 8000:80

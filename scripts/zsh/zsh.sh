@@ -8,7 +8,7 @@ printf "\n\nYou are going to install zsh with some plugins.\n"
 printf "_______________________________________________________________________________"
 printf "\n\n"
 
-read -p "Do you want to install additionall software reccomended?[Yy/Nn] " -n 1 -r
+read -p "Do you want to install additional recommended software?[Yy/Nn] " -n 1 -r
 printf "\n"
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -32,7 +32,7 @@ then
   fi
 fi
 
-curl https://raw.githubusercontent.com/padawarmik/docker-scripts/main/scripts/zsh/.p10k.zsh -o $HOME/.p10k.zsh -s
+curl https://raw.githubusercontent.com/padawarmik/scripts/main/scripts/zsh/.p10k.zsh -o $HOME/.p10k.zsh -s
 
 if [ -f $HOME/.zshrc ]
 then
@@ -42,10 +42,10 @@ then
   then
     printf "Deleting\n"
     rm $HOME/.zshrc -f
-    curl https://raw.githubusercontent.com/padawarmik/docker-scripts/main/scripts/zsh/.zshrc -o $HOME/.zshrc -s
+    curl https://raw.githubusercontent.com/padawarmik/scripts/main/scripts/zsh/.zshrc -o $HOME/.zshrc -s
   fi
 else
-  curl https://raw.githubusercontent.com/padawarmik/docker-scripts/main/scripts/zsh/.zshrc -o $HOME/.zshrc -s
+  curl https://raw.githubusercontent.com/padawarmik/scripts/main/scripts/zsh/.zshrc -o $HOME/.zshrc -s
 fi
 
 mkdir -p $HOME/.aliases
