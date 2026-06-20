@@ -1,0 +1,44 @@
+add_newline = false
+command_timeout = 1000
+
+format = "$os$username$hostname$directory$git_branch$git_status$kubernetes$character"
+
+[os]
+disabled = false
+format = "[$symbol]($style) "
+style = "bold blue"
+
+[username]
+show_always = false
+format = "[$user]($style)@"
+style_user = "bold green"
+
+[hostname]
+ssh_only = true
+format = "[$hostname]($style) "
+style = "bold green"
+
+[directory]
+truncation_length = 4
+truncate_to_repo = false
+format = "[$path]($style) "
+style = "bold cyan"
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+symbol = " "
+style = "bold purple"
+
+[git_status]
+format = "([$all_status$ahead_behind]($style) )"
+style = "bold yellow"
+
+[kubernetes]
+disabled = false
+format = "[$symbol$context(/$namespace)]($style) "
+style = "bold blue"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"

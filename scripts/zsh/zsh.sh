@@ -3,7 +3,10 @@
 set -euo pipefail
 
 K9S_VERSION=v0.32.5
-RAW_BASE_URL="https://raw.githubusercontent.com/padawarmik/scripts/main/scripts/zsh"
+RAW_BASE_URL="${RAW_BASE_URL:-https://raw.githubusercontent.com/padawarmik/scripts/main/scripts/zsh}"
+ZSH_CONFIG_SOURCE_DIR="${ZSH_CONFIG_SOURCE_DIR:-}"
+ZSH_CONFIG_DIR="${ZSH_CONFIG_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/zsh}"
+LOCAL_BIN_DIR="${LOCAL_BIN_DIR:-${HOME}/.local/bin}"
 
 if [[ ${EUID} -eq 0 ]]; then
   SUDO=()
@@ -22,6 +25,27 @@ detect_package_manager() {
     echo "pacman"
   else
     echo ""
+  fi
+}
+
+apt_package_available() {
+  apt-cache show "$1" >/dev/null 2>&1
+}
+
+install_apt_packages_if_available() {
+  local packages=()
+  local package
+
+  for package in "$@"; do
+    if apt_package_available "${package}"; then
+      packages+=("${package}")
+    else
+      printf "Skipping optional apt package not available in enabled repositories: %s\n" "${package}"
+    fi
+  done
+
+  if ((${#packages[@]} > 0)); then
+    "${SUDO[@]}" apt-get install -y "${packages[@]}"
   fi
 }
 
@@ -44,6 +68,48 @@ install_base_packages() {
       exit 1
       ;;
   esac
+}
+
+install_cli_tools() {
+  local package_manager="$1"
+
+  case "${package_manager}" in
+    apt)
+      printf "Installing recommended CLI tools with apt when available\n"
+      install_apt_packages_if_available neovim eza bat fd-find fzf zoxide starship ripgrep
+      ensure_debian_command_wrappers
+      ;;
+    pacman)
+      printf "Installing recommended CLI tools with pacman\n"
+      "${SUDO[@]}" pacman -Syu --needed --noconfirm neovim eza bat fd fzf zoxide starship ripgrep
+      ;;
+    *)
+      printf "Unsupported package manager. This script supports Debian-like (apt) and Arch-like (pacman) distributions.\n" >&2
+      exit 1
+      ;;
+  esac
+}
+
+ensure_debian_command_wrappers() {
+  mkdir -p "${LOCAL_BIN_DIR}"
+
+  if ! command_exists bat && command_exists batcat; then
+    cat > "${LOCAL_BIN_DIR}/bat" <<'WRAPPER'
+#!/bin/sh
+exec batcat "$@"
+WRAPPER
+    chmod +x "${LOCAL_BIN_DIR}/bat"
+    printf "Created bat wrapper at %s\n" "${LOCAL_BIN_DIR}/bat"
+  fi
+
+  if ! command_exists fd && command_exists fdfind; then
+    cat > "${LOCAL_BIN_DIR}/fd" <<'WRAPPER'
+#!/bin/sh
+exec fdfind "$@"
+WRAPPER
+    chmod +x "${LOCAL_BIN_DIR}/fd"
+    printf "Created fd wrapper at %s\n" "${LOCAL_BIN_DIR}/fd"
+  fi
 }
 
 kubectl_arch() {
@@ -113,9 +179,8 @@ prompt_yes_no() {
   local prompt="$1"
   local answer=""
 
-  if [[ -r /dev/tty ]]; then
-    read -r -p "${prompt}" -n 1 answer < /dev/tty
-    printf "\n" > /dev/tty
+  if read -r -p "${prompt}" -n 1 answer 2>/dev/null < /dev/tty; then
+    printf "\n" > /dev/tty 2>/dev/null || true
   else
     printf "%sN\n" "${prompt}"
   fi
@@ -123,51 +188,133 @@ prompt_yes_no() {
   [[ ${answer} =~ ^[Yy]$ ]]
 }
 
-download_zsh_config() {
-  printf "Downloading Powerlevel10k and Zsh configuration\n"
-  curl -fsSL "${RAW_BASE_URL}/.p10k.zsh" -o "${HOME}/.p10k.zsh"
+ensure_xdg_zsh_dirs() {
+  mkdir -p \
+    "${ZSH_CONFIG_DIR}" \
+    "${XDG_STATE_HOME:-${HOME}/.local/state}/zsh" \
+    "${XDG_CACHE_HOME:-${HOME}/.cache}/zsh" \
+    "${LOCAL_BIN_DIR}" \
+    "${HOME}/.aliases"
+}
 
-  if [[ -f "${HOME}/.zshrc" ]]; then
-    if prompt_yes_no "Your .zshrc file will be replaced. Do you want to continue?[Yy/Nn] "; then
-      printf "Replacing .zshrc\n"
-      rm -f "${HOME}/.zshrc"
-      curl -fsSL "${RAW_BASE_URL}/.zshrc" -o "${HOME}/.zshrc"
-    fi
-  else
-    curl -fsSL "${RAW_BASE_URL}/.zshrc" -o "${HOME}/.zshrc"
+backup_file() {
+  local path="$1"
+  local backup
+
+  if [[ -e "${path}" || -L "${path}" ]]; then
+    backup="${path}.bak.$(date +%Y%m%d%H%M%S)"
+    mv "${path}" "${backup}"
+    printf "Backed up %s to %s\n" "${path}" "${backup}"
   fi
+}
+
+install_config_file() {
+  local name="$1"
+  local destination="${ZSH_CONFIG_DIR}/${name}"
+  local source="${ZSH_CONFIG_SOURCE_DIR:+${ZSH_CONFIG_SOURCE_DIR}/${name}}"
+
+  if [[ -n "${ZSH_CONFIG_SOURCE_DIR}" && -f "${source}" ]]; then
+    if [[ -f "${destination}" ]] && cmp -s "${source}" "${destination}"; then
+      return
+    fi
+    backup_file "${destination}"
+    cp "${source}" "${destination}"
+  else
+    if ! command_exists curl; then
+      printf "curl is required to download %s. Install curl or run with ZSH_CONFIG_SOURCE_DIR.\n" "${name}" >&2
+      exit 1
+    fi
+    if [[ -f "${destination}" ]]; then
+      backup_file "${destination}"
+    fi
+    curl -fsSL "${RAW_BASE_URL}/${name}" -o "${destination}"
+  fi
+}
+
+configure_zdotdir() {
+  local zshenv="${HOME}/.zshenv"
+  local begin="# >>> padawarmik zsh setup >>>"
+  local end="# <<< padawarmik zsh setup <<<"
+  local block
+
+  block="${begin}
+export XDG_CONFIG_HOME=\"\${XDG_CONFIG_HOME:-\${HOME}/.config}\"
+export ZDOTDIR=\"\${ZDOTDIR:-\${XDG_CONFIG_HOME}/zsh}\"
+[[ -r \"\${ZDOTDIR}/.zshenv\" ]] && source \"\${ZDOTDIR}/.zshenv\"
+${end}"
+
+  touch "${zshenv}"
+  if grep -Fq "${begin}" "${zshenv}"; then
+    local tmp
+    tmp="$(mktemp)"
+    awk -v begin="${begin}" -v end="${end}" -v block="${block}" '
+      $0 == begin { print block; in_block=1; next }
+      $0 == end { in_block=0; next }
+      !in_block { print }
+    ' "${zshenv}" > "${tmp}"
+    mv "${tmp}" "${zshenv}"
+  else
+    printf "\n%s\n" "${block}" >> "${zshenv}"
+  fi
+}
+
+install_zsh_dotfiles() {
+  local files=(.zshenv .zshrc fzf.zsh aliases.zsh bindings.zsh plugins.zsh prompt.zsh starship.toml)
+  local file
+
+  printf "Installing modular Zsh configuration into %s\n" "${ZSH_CONFIG_DIR}"
+  ensure_xdg_zsh_dirs
+  configure_zdotdir
+
+  for file in "${files[@]}"; do
+    install_config_file "${file}"
+  done
+
+  touch "${HOME}/.aliases/custom_aliases" "${HOME}/.aliases/customs"
 }
 
 main() {
   local package_manager
+  local installed_recommended=false
   package_manager="$(detect_package_manager)"
 
   sleep 1
   printf "\n\n"
   printf "_______________________________________________________________________________"
-  printf "\n\nYou are going to install zsh with some plugins.\n"
+  printf "\n\nYou are going to install a minimal, frameworkless zsh setup.\n"
   printf "Detected package manager: %s\n" "${package_manager:-unsupported}"
   printf "_______________________________________________________________________________"
   printf "\n\n"
 
   if prompt_yes_no "Do you want to install additional recommended software?[Yy/Nn] "; then
     install_base_packages "${package_manager}"
+    install_cli_tools "${package_manager}"
+    installed_recommended=true
 
     if prompt_yes_no "Do you want to install kubernetes tools?[Yy/Nn] "; then
       install_kubernetes_tools "${package_manager}"
     fi
   fi
 
-  download_zsh_config
+  install_zsh_dotfiles
 
-  mkdir -p "${HOME}/.aliases"
-  touch "${HOME}/.aliases/custom_aliases"
-  touch "${HOME}/.aliases/customs"
+  if [[ "${installed_recommended}" == true ]]; then
+    touch "${ZSH_CONFIG_DIR}/.enable-plugin-install"
+  fi
 
   printf "\n\n"
-  printf "The work has been done, restart your terminal now to feel the power of the ZSH command prompt\nNow you can run chsh -s '%s' to set default shell.\n" "$(command -v zsh || echo zsh)"
-  printf "You can now add custom aliases to the ~/.aliases/custom_aliases file.\n"
-  printf "To rerun this script run 'zsh-rerun'\n"
+  printf "The Zsh configuration has been installed. Restart your terminal to use it.\n"
+  if command_exists zsh; then
+    printf "You can run chsh -s '%s' to set zsh as your default shell.\n" "$(command -v zsh)"
+  else
+    printf "zsh is not installed. Install it before changing your default shell.\n"
+  fi
+  printf "You can add custom aliases to ~/.aliases/custom_aliases.\n"
+  printf "To rerun this script run 'zsh-rerun'.\n"
+
+  if [[ "${installed_recommended}" == false ]]; then
+    printf "Recommended tools were not installed; the configuration will skip integrations for missing commands.\n"
+  fi
 }
 
 if [[ "${BASH_SOURCE[0]:-$0}" == "$0" ]]; then
