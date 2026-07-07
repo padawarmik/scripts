@@ -30,7 +30,6 @@ zinit ice depth=1; zinit light romkatv/powerlevel10k
 
 # Add in zsh plugins
 zinit light zsh-users/zsh-syntax-highlighting
-zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
 zinit light unixorn/kubectx-zshplugin
@@ -44,7 +43,8 @@ zinit snippet OMZP::kubectx
 zinit snippet OMZP::command-not-found
 zinit snippet OMZP::zsh-interactive-cd
 
-# Load completions
+# Load explicit completions shipped by this repository before compinit scans fpath.
+fpath=("${HOME}/.zsh/completions" $fpath)
 autoload -Uz compinit; compinit
 source <(kubectl completion zsh)
 
