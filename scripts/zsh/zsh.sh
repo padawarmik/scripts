@@ -126,6 +126,8 @@ prompt_yes_no() {
 download_zsh_config() {
   printf "Downloading Powerlevel10k and Zsh configuration\n"
   curl -fsSL "${RAW_BASE_URL}/.p10k.zsh" -o "${HOME}/.p10k.zsh"
+  mkdir -p "${HOME}/.aliases"
+  curl -fsSL "${RAW_BASE_URL}/aliases.zsh" -o "${HOME}/.aliases/aliases.zsh"
 
   if [[ -f "${HOME}/.zshrc" ]]; then
     if prompt_yes_no "Your .zshrc file will be replaced. Do you want to continue?[Yy/Nn] "; then
@@ -160,7 +162,6 @@ main() {
 
   download_zsh_config
 
-  mkdir -p "${HOME}/.aliases"
   touch "${HOME}/.aliases/custom_aliases"
   touch "${HOME}/.aliases/customs"
 

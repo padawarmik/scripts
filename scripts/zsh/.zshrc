@@ -42,8 +42,6 @@ zinit snippet OMZP::sudo
 zinit snippet OMZP::kubectl
 zinit snippet OMZP::kubectx
 zinit snippet OMZP::command-not-found
-zinit snippet OMZP::docker
-zinit snippet OMZP::docker-compose
 zinit snippet OMZP::zsh-interactive-cd
 
 # Load completions
@@ -66,6 +64,7 @@ setopt hist_ignore_dups
 setopt hist_find_no_dups
 
 # Aliases
+[[ -f "$HOME/.aliases/aliases.zsh" ]] && source "$HOME/.aliases/aliases.zsh"
 source $HOME/.aliases/custom_aliases
 source $HOME/.aliases/customs
 
