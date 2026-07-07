@@ -140,6 +140,23 @@ download_zsh_config() {
   fi
 }
 
+download_zsh_completions() {
+  local completion_dir="${HOME}/.zsh/completions"
+  local manifest_file
+
+  printf "Downloading explicit Zsh completion files\n"
+  mkdir -p "${completion_dir}"
+  manifest_file="$(mktemp)"
+  curl -fsSL "${RAW_BASE_URL}/completions.txt" -o "${manifest_file}"
+
+  while IFS= read -r completion_file; do
+    [[ -n "${completion_file}" ]] || continue
+    curl -fsSL "${RAW_BASE_URL}/completions/${completion_file}" -o "${completion_dir}/${completion_file}"
+  done < "${manifest_file}"
+
+  rm -f "${manifest_file}"
+}
+
 main() {
   local package_manager
   package_manager="$(detect_package_manager)"
@@ -161,6 +178,7 @@ main() {
   fi
 
   download_zsh_config
+  download_zsh_completions
 
   touch "${HOME}/.aliases/custom_aliases"
   touch "${HOME}/.aliases/customs"
