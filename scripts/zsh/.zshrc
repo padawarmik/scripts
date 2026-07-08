@@ -1,4 +1,4 @@
-PZSHVER="1.3"
+PZSHVER="1.4"
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -37,16 +37,16 @@ zinit light unixorn/kubectx-zshplugin
 
 # Add in snippets
 zinit snippet OMZP::azure
-zinit snippet OMZP::git
 zinit snippet OMZP::sudo
-zinit snippet OMZP::kubectl
 zinit snippet OMZP::kubectx
 zinit snippet OMZP::command-not-found
 zinit snippet OMZP::zsh-interactive-cd
 
 # Load completions
 autoload -Uz compinit; compinit
-source <(kubectl completion zsh)
+if (( $+commands[kubectl] )); then
+  source <(kubectl completion zsh)
+fi
 
 zinit cdreplay -q
 
@@ -65,6 +65,8 @@ setopt hist_find_no_dups
 
 # Aliases
 [[ -f "$HOME/.aliases/aliases.zsh" ]] && source "$HOME/.aliases/aliases.zsh"
+[[ -f "$HOME/.aliases/git.zsh" ]] && source "$HOME/.aliases/git.zsh"
+[[ -f "$HOME/.aliases/kubectl.zsh" ]] && source "$HOME/.aliases/kubectl.zsh"
 source $HOME/.aliases/custom_aliases
 source $HOME/.aliases/customs
 

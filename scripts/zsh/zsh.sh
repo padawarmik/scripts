@@ -128,6 +128,8 @@ download_zsh_config() {
   curl -fsSL "${RAW_BASE_URL}/.p10k.zsh" -o "${HOME}/.p10k.zsh"
   mkdir -p "${HOME}/.aliases"
   curl -fsSL "${RAW_BASE_URL}/aliases.zsh" -o "${HOME}/.aliases/aliases.zsh"
+  curl -fsSL "${RAW_BASE_URL}/aliases/git.zsh" -o "${HOME}/.aliases/git.zsh"
+  curl -fsSL "${RAW_BASE_URL}/aliases/kubectl.zsh" -o "${HOME}/.aliases/kubectl.zsh"
 
   if [[ -f "${HOME}/.zshrc" ]]; then
     if prompt_yes_no "Your .zshrc file will be replaced. Do you want to continue?[Yy/Nn] "; then
