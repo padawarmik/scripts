@@ -125,6 +125,12 @@ prompt_yes_no() {
 
 download_zsh_config() {
   printf "Downloading Powerlevel10k and Zsh configuration\n"
+  local obsolete_plugin="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/plugins/unixorn---kubectx-zshplugin"
+  if [[ -d "${obsolete_plugin}" ]]; then
+    printf "Removing obsolete kubectx Zinit plugin\n"
+    rm -rf -- "${obsolete_plugin}"
+  fi
+
   curl -fsSL "${RAW_BASE_URL}/.p10k.zsh" -o "${HOME}/.p10k.zsh"
   mkdir -p "${HOME}/.aliases"
   curl -fsSL "${RAW_BASE_URL}/aliases.zsh" -o "${HOME}/.aliases/aliases.zsh"
