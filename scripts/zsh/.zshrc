@@ -63,6 +63,22 @@ setopt hist_save_no_dups
 setopt hist_ignore_dups
 setopt hist_find_no_dups
 
+bindkey '^[[H' beginning-of-line
+bindkey '^[OH' beginning-of-line
+bindkey '^[[1~' beginning-of-line
+
+bindkey '^[[F' end-of-line
+bindkey '^[OF' end-of-line
+bindkey '^[[4~' end-of-line
+
+bindkey '^[[3~' delete-char
+
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+
+autoload -Uz select-word-style
+select-word-style whitespace
+
 # Aliases
 [[ -f "$HOME/.aliases/aliases.zsh" ]] && source "$HOME/.aliases/aliases.zsh"
 source $HOME/.aliases/custom_aliases
