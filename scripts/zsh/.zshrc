@@ -1,4 +1,4 @@
-PZSHVER="1.3"
+PZSHVER="1.4"
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -33,7 +33,6 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
-zinit light unixorn/kubectx-zshplugin
 
 # Add in snippets
 zinit snippet OMZP::azure
@@ -62,6 +61,24 @@ setopt hist_ignore_all_dups
 setopt hist_save_no_dups
 setopt hist_ignore_dups
 setopt hist_find_no_dups
+
+bindkey '^[[H' beginning-of-line
+bindkey '^[OH' beginning-of-line
+bindkey '^[[1~' beginning-of-line
+
+bindkey '^[[F' end-of-line
+bindkey '^[OF' end-of-line
+bindkey '^[[4~' end-of-line
+
+bindkey '^[[3~' delete-char
+
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+bindkey '^[[3;5~' kill-word
+bindkey '^H' backward-kill-word
+
+autoload -Uz select-word-style
+select-word-style whitespace
 
 # Aliases
 [[ -f "$HOME/.aliases/aliases.zsh" ]] && source "$HOME/.aliases/aliases.zsh"
